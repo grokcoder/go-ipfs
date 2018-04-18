@@ -111,18 +111,7 @@ func mainErr() error {
 		}
 	}
 
-	out := Out{
-		Groups: []Group{
-			{
-				Name:        "Go benchmarks",
-				Description: "Go benchmarks",
-
-				Tests: tests,
-			},
-		},
-	}
-
-	b, err := json.Marshal(&out)
+	b, err := json.Marshal(&tests)
 	if err != nil {
 		return err
 	}

@@ -166,24 +166,10 @@ ansiColor('xterm') { withEnv(['TERM=xterm-color']) { timeout(time: 30, unit: 'MI
       },
       'benchmark': {
         setupStep('linux') { run ->
-          // Figure out our IP + Multiaddr for master to ensure connection
-          // def nodeIP = run returnStdout: true, script: 'dig +short myip.opendns.com @resolver1.opendns.com'
-          // benchNodeAddr = run returnStdout: true, script: "ipfs id --format='<addrs>\n' | grep $nodeIP"
-
           run 'make test/bench/bench-results.json'
 
-          // benchJsonHash = run(returnStdout: true, script: "ipfs add -Q test/bench/bench-results.json").trim()
-
-          benchmark altInputSchema: '', altInputSchemaLocation: '', inputLocation: 'test/bench/bench-results.json', schemaSelection: 'defaultSchema', truncateStrings: false
+          benchmark altInputSchema: '', altInputSchemaLocation: 'test/bench/bench-plugin-schema.json', inputLocation: 'test/bench/bench-results.json', schemaSelection: 'customSchema', truncateStrings: false
         }
-        /*node(label: 'master') {
-          withEnv(["IPFS_PATH=/efs/.ipfs"]) {
-            sh "ipfs swarm connect $benchNodeAddr"
-            sh "ipfs get -o bench-results.json $benchJsonHash"
-         }
-
-         benchmark altInputSchema: '', altInputSchemaLocation: '', inputLocation: 'bench-results.json', schemaSelection: 'defaultSchema', truncateStrings: false
-        }*/
       }
     )
   }

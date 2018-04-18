@@ -1,0 +1,89 @@
+{
+  "description": "jenkins benchmark plugin schema for go-ipfs",
+  "type": "array",
+  "properties": {
+    "items": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "name"
+        },
+        "description": {
+          "type": "description"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "parameter",
+            "properties": {
+              "name": {
+                "type": "name"
+              },
+              "description": {
+                "type": "description"
+              },
+              "unit": {
+                "type": "unit"
+              },
+              "value": {
+                "type": "value"
+              }
+            }
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "result",
+            "properties": {
+              "name": {
+                "type": "name"
+              },
+              "description": {
+                "type": "description"
+              },
+              "unit": {
+                "type": "unit"
+              },
+              "boolValue": {
+                "type": "boolean"
+              },
+              "intValue": {
+                "type": "integer"
+              },
+              "dblValue": {
+                "type": "double"
+              },
+              "value": {
+                "type": "value"
+              },
+              "thresholds": {
+                "type": "array",
+                "items": {
+                  "type": "threshold",
+                  "properties": {
+                    "method": {
+                      "type": "method"
+                    },
+                    "minimum": {
+                      "type": "minimum"
+                    },
+                    "maximum": {
+                      "type": "maximum"
+                    },
+                    "delta": {
+                      "type": "delta"
+                    },
+                    "percentage": {
+                      "type": "percentage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
