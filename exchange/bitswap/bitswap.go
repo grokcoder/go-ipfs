@@ -168,6 +168,7 @@ type Bitswap struct {
 	sessIDLk sync.Mutex
 }
 
+//各种统计数据
 type counters struct {
 	blocksRecvd    uint64
 	dupBlocksRecvd uint64
@@ -208,11 +209,13 @@ func (bs *Bitswap) LedgerForPeer(p peer.ID) *decision.Receipt {
 // NB: Your request remains open until the context expires. To conserve
 // resources, provide a context with a reasonably short deadline (ie. not one
 // that lasts throughout the lifetime of the server)
+
+// 返回一个Block的channel
 func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan blocks.Block, error) {
 	if len(keys) == 0 {
 		out := make(chan blocks.Block)
 		close(out)
-		return out, nil
+		return out, nil// TODO: 关闭的channel 外部使用的时候会不会有问题？
 	}
 
 	select {
@@ -226,9 +229,9 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 		log.Event(ctx, "Bitswap.GetBlockRequest.Start", k)
 	}
 
-	mses := bs.getNextSessionID()
+	mses := bs.getNextSessionID() //原子的或得下一个 session id, 如果超出了int64 会不会有什么问题
 
-	bs.wm.WantBlocks(ctx, keys, nil, mses)
+	bs.wm.WantBlocks(ctx, keys, nil, mses) // 调用wantManager
 
 	// NB: Optimization. Assumes that providers of key[0] are likely to
 	// be able to provide for all keys. This currently holds true in most
@@ -256,13 +259,14 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 			select {
 			case blk, ok := <-promise:
 				if !ok {
+					// 通道被关闭
 					return
 				}
 
 				bs.CancelWants([]*cid.Cid{blk.Cid()}, mses)
 				remaining.Remove(blk.Cid())
 				select {
-				case out <- blk:
+				case out <- blk: // 单元素通道会有所阻塞
 				case <-ctx.Done():
 					return
 				}
@@ -273,7 +277,7 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 	}()
 
 	select {
-	case bs.findKeys <- req:
+	case bs.findKeys <- req: // 寻找其他的provider
 		return out, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()

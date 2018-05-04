@@ -25,13 +25,15 @@ func getBlock(p context.Context, k *cid.Cid, gb getBlocksFunc) (blocks.Block, er
 	// functions called by this one. Otherwise those functions won't return
 	// when this context's cancel func is executed. This is difficult to
 	// enforce. May this comment keep you safe.
+	// ctx 可以控制该函数所创建的新的goroutine 的生命周期
 	ctx, cancel := context.WithCancel(p)
 	defer cancel()
 
-	promise, err := gb(ctx, []*cid.Cid{k})
+	promise, err := gb(ctx, []*cid.Cid{k}) // 其实调用的是GetBlocks方法
 	if err != nil {
 		return nil, err
 	}
+	// 什么是promise
 
 	select {
 	case block, ok := <-promise:

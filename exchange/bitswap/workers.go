@@ -47,6 +47,7 @@ func (bs *Bitswap) startWorkers(px process.Process, ctx context.Context) {
 	px.Go(bs.provideWorker)
 }
 
+//处理别的节点的block的请求
 func (bs *Bitswap) taskWorker(ctx context.Context, id int) {
 	idmap := logging.LoggableMap{"ID": id}
 	defer log.Debug("bitswap task worker shutting down...")
@@ -204,6 +205,7 @@ func (bs *Bitswap) rebroadcastWorker(parent context.Context) {
 	}
 }
 
+// 查询block id所拥有者的id，并同该节点建立连接
 func (bs *Bitswap) providerQueryManager(ctx context.Context) {
 	var activeLk sync.Mutex
 	kset := cid.NewSet()
@@ -228,13 +230,14 @@ func (bs *Bitswap) providerQueryManager(ctx context.Context) {
 			go func(e *blockRequest) {
 				child, cancel := context.WithTimeout(e.Ctx, providerRequestTimeout)
 				defer cancel()
+				//找到该key可能所在的节点信息，然后向其发送相关请求
 				providers := bs.network.FindProvidersAsync(child, e.Cid, maxProvidersPerRequest)
 				wg := &sync.WaitGroup{}
 				for p := range providers {
 					wg.Add(1)
 					go func(p peer.ID) {
 						defer wg.Done()
-						err := bs.network.ConnectTo(child, p)
+						err := bs.network.ConnectTo(child, p) // 只是连接到相关节点？ 不发送wantlist， 或者是由wantManager 异步发送其wantlist的
 						if err != nil {
 							log.Debug("failed to connect to provider %s: %s", p, err)
 						}

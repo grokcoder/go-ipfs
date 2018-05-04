@@ -216,7 +216,6 @@ func toPeerInfos(bpeers []config.BootstrapPeer) []pstore.PeerInfo {
 	for _, pinfo := range pinfos {
 		peers = append(peers, *pinfo)
 	}
-
 	return peers
 }
 

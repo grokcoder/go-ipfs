@@ -20,6 +20,7 @@ const activeWantsLimit = 16
 // Session holds state for an individual bitswap transfer operation.
 // This allows bitswap to make smarter decisions about who to send wantlist
 // info to, and who to request blocks from
+// 记录单独的bitswap数据
 type Session struct {
 	ctx            context.Context
 	tofetch        *cidQueue

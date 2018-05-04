@@ -127,6 +127,7 @@ func (e *Engine) LedgerForPeer(p peer.ID) *Receipt {
 	}
 }
 
+// 处理block fetch 的线程
 func (e *Engine) taskWorker(ctx context.Context) {
 	defer close(e.outbox) // because taskWorker uses the channel exclusively
 	for {

@@ -77,8 +77,12 @@ type msgQueue struct {
 }
 
 // WantBlocks adds the given cids to the wantlist, tracked by the given session
+// ses == sessionId
+// TODO: polish code WantManager 为啥接收者叫pm？存在误导
 func (pm *WantManager) WantBlocks(ctx context.Context, ks []*cid.Cid, peers []peer.ID, ses uint64) {
 	log.Infof("want blocks: %s", ks)
+
+	// peers = nil
 	pm.addEntries(ctx, ks, peers, false, ses)
 }
 
@@ -98,10 +102,11 @@ func (pm *WantManager) addEntries(ctx context.Context, ks []*cid.Cid, targets []
 	for i, k := range ks {
 		entries = append(entries, &bsmsg.Entry{
 			Cancel: cancel,
-			Entry:  wantlist.NewRefEntry(k, kMaxPriority-i),
+			Entry:  wantlist.NewRefEntry(k, kMaxPriority-i), // 优先级递减
 		})
 	}
 	select {
+	// TODO: 这里的targets 是否可以自己设置
 	case pm.incoming <- &wantSet{entries: entries, targets: targets, from: ses}:
 	case <-pm.ctx.Done():
 	case <-ctx.Done():
@@ -212,6 +217,7 @@ func (mq *msgQueue) doWork(ctx context.Context) {
 	}
 
 	// send wantlist updates
+	// wantlist 的变更发送出去
 	for { // try to send this message until we fail.
 		err := mq.sender.SendMsg(ctx, wlm)
 		if err == nil {
@@ -287,6 +293,7 @@ func (pm *WantManager) Disconnected(p peer.ID) {
 }
 
 // TODO: use goprocess here once i trust it
+// 处理Block请求的真正线程
 func (pm *WantManager) Run() {
 	// NOTE: Do not open any streams or connections from anywhere in this
 	// event loop. Really, just don't do anything likely to block.
@@ -295,6 +302,7 @@ func (pm *WantManager) Run() {
 		case ws := <-pm.incoming:
 
 			// is this a broadcast or not?
+			// 原来targets 不等于0的时候为广播
 			brdc := len(ws.targets) == 0
 
 			// add changes to our wantlist
@@ -308,8 +316,8 @@ func (pm *WantManager) Run() {
 						pm.wantlistGauge.Dec()
 					}
 				} else {
-					if brdc {
-						pm.bcwl.AddEntry(e.Entry, ws.from)
+					if brdc { // broadcast
+						pm.bcwl.AddEntry(e.Entry, ws.from) // from表示的是session id
 					}
 					if pm.wl.AddEntry(e.Entry, ws.from) {
 						pm.wantlistGauge.Inc()
@@ -318,6 +326,7 @@ func (pm *WantManager) Run() {
 			}
 
 			// broadcast those wantlist changes
+			// TODO: 为啥需要广播 want list的改变
 			if len(ws.targets) == 0 {
 				for _, p := range pm.peers {
 					p.addMessage(ws.entries, ws.from)
